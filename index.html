@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kampus Bersih Digital - Universitas Tadulako</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        },
+                        untad: {
+                            blue: '#0284c7',
+                            dark: '#0f172a'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet CSS & JS for Digital Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Chart.js for Environmental Statistics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- QRCode JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- SweetAlert2 for clean UI dialogs -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        #map {
+            min-height: 420px;
+            z-index: 10;
+        }
+        .custom-popup .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            padding: 4px;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen font-sans antialiased">
+
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Brand Logo & Title -->
+                <div class="flex items-center gap-3 cursor-pointer" onclick="scrollToSection('hero')">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+                        <i class="fa-solid fa-leaf text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-lg font-bold bg-gradient-to-r from-emerald-700 to-teal-700 bg-clip-text text-transparent">Kampus Bersih Digital</span>
+                        <div class="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-graduation-cap text-emerald-600"></i> Universitas Tadulako
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desktop Nav Navigation Links -->
+                <nav class="hidden md:flex items-center space-x-1 lg:space-x-4 text-sm font-medium">
+                    <button onclick="scrollToSection('peta')" class="px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-slate-100 transition">Peta Digital</button>
+                    <button onclick="scrollToSection('panduan')" class="px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-slate-100 transition">Panduan Pemilahan</button>
+                    <button onclick="scrollToSection('lapor')" class="px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-slate-100 transition">Laporkan Sampah</button>
+                    <button onclick="scrollToSection('dashboard')" class="px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-slate-100 transition">Dashboard Petugas</button>
+                    <button onclick="scrollToSection('statistik')" class="px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-slate-100 transition">Statistik</button>
+                </nav>
+
+                <!-- Action Buttons & Presentation Doc -->
+                <div class="flex items-center gap-2">
+                    <button onclick="openModal('presentationModal')" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 text-xs sm:text-sm font-semibold transition shadow-sm">
+                        <i class="fa-solid fa-file-powerpoint text-amber-600"></i>
+                        <span>Slide PPT</span>
+                    </button>
+                    <button onclick="openModal('qrScannerModal')" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold transition shadow-md shadow-emerald-600/20">
+                        <i class="fa-solid fa-qrcode"></i>
+                        <span class="hidden sm:inline">Pindai QR</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <!-- Hero Section -->
+        <section id="hero" class="relative overflow-hidden bg-gradient-to-b from-emerald-900 via-teal-900 to-slate-900 text-white py-16 lg:py-20">
+            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#22c55e_1px,transparent_1px)] [background-size:16px_16px]"></div>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-semibold">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                            Sistem Manajemen Sampah Terintegrasi UNTAD
+                        </div>
+                        <h1 class="text-3xl sm:text-5xl font-extrabold leading-tight tracking-tight">
+                            Solusi Berbasis Teknologi untuk <span class="text-emerald-400">Kampus Bersih & Hijau</span>
+                        </h1>
+                        <p class="text-slate-300 text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 font-normal">
+                            Gunakan QR Code di setiap tempat sampah UNTAD untuk melihat panduan pemilahan secara langsung, melapor tempat sampah penuh, dan memantau penanganan oleh petugas kebersihan secara real-time.
+                        </p>
+                        
+                        <!-- Main CTA Buttons -->
+                        <div class="flex flex-wrap gap-3 justify-center lg:justify-start pt-2">
+                            <button onclick="scrollToSection('lapor')" class="px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-emerald-500/30 flex items-center gap-2">
+                                <i class="fa-solid fa-paper-plane"></i> Laporkan Masalah
+                            </button>
+                            <button onclick="scrollToSection('peta')" class="px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-sm backdrop-blur-md transition flex items-center gap-2">
+                                <i class="fa-solid fa-map-location-dot"></i> Lihat Peta Tempat Sampah
+                            </button>
+                        </div>
+
+                        <!-- System Workflow Bar -->
+                        <div class="pt-6 border-t border-slate-800/80">
+                            <p class="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-3">Alur Kerja Sistem:</p>
+                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
+                                <div class="bg-white/5 p-2 rounded-lg border border-white/10">
+                                    <div class="text-emerald-400 font-bold mb-0.5">1. Scan QR</div>
+                                    <span class="text-slate-400 text-[10px]">Di Tempat Sampah</span>
+                                </div>
+                                <div class="bg-white/5 p-2 rounded-lg border border-white/10">
+                                    <div class="text-emerald-400 font-bold mb-0.5">2. Pilah / Laporkan</div>
+                                    <span class="text-slate-400 text-[10px]">Panduan & Foto</span>
+                                </div>
+                                <div class="bg-white/5 p-2 rounded-lg border border-white/10">
+                                    <div class="text-emerald-400 font-bold mb-0.5">3. Data Tersimpan</div>
+                                    <span class="text-slate-400 text-[10px]">Notifikasi Sistem</span>
+                                </div>
+                                <div class="bg-white/5 p-2 rounded-lg border border-white/10">
+                                    <div class="text-emerald-400 font-bold mb-0.5">4. Tangani</div>
+                                    <span class="text-slate-400 text-[10px]">Oleh Petugas</span>
+                                </div>
+                                <div class="bg-white/5 p-2 rounded-lg border border-white/10 col-span-2 sm:col-span-1">
+                                    <div class="text-emerald-400 font-bold mb-0.5">5. Evaluasi</div>
+                                    <span class="text-slate-400 text-[10px]">Statistik Daur Ulang</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Interactive Preview Card -->
+                    <div class="lg:col-span-5">
+                        <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-6 shadow-2xl backdrop-blur-xl">
+                            <div class="flex items-center justify-between mb-4 border-b border-slate-700 pb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                                    <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                                    <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                                    <span class="text-xs text-slate-400 font-mono ml-2">Lokasi Terdaftar UNTAD</span>
+                                </div>
+                                <span class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-mono">5 Titik Aktif</span>
+                            </div>
+
+                            <p class="text-xs text-slate-300 mb-3">Pilih titik sampel untuk mensimulasikan pemindaian QR Code:</p>
+
+                            <div class="space-y-2 max-h-64 overflow-y-auto pr-1" id="heroBinList">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Map Section -->
+        <section id="peta" class="py-12 bg-white border-b border-slate-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
+                    <div>
+                        <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-600 mb-1">
+                            <i class="fa-solid fa-map-pin"></i> Peta Digital Universitas Tadulako
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Sebaran Tempat Sampah & Status Laporan</h2>
+                        <p class="text-slate-600 text-sm mt-1">Peta interaktif 5 titik sampel utama di area kampus Universitas Tadulako, Palu.</p>
+                    </div>
+
+                    <!-- Map Legend / Filter -->
+                    <div class="flex flex-wrap gap-2 items-center bg-slate-100 p-1.5 rounded-xl border border-slate-200 text-xs">
+                        <button onclick="filterMap('all')" id="btnFilterAll" class="px-3 py-1.5 rounded-lg font-medium bg-white text-slate-800 shadow-sm transition">Semua (5)</button>
+                        <button onclick="filterMap('normal')" id="btnFilterNormal" class="px-3 py-1.5 rounded-lg font-medium text-slate-600 hover:bg-white/60 transition flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Normal
+                        </button>
+                        <button onclick="filterMap('full')" id="btnFilterFull" class="px-3 py-1.5 rounded-lg font-medium text-slate-600 hover:bg-white/60 transition flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Penuh / Butuh Penanganan
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <!-- Map Canvas Container -->
+                    <div class="lg:col-span-8 bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 shadow-sm relative">
+                        <div id="map" class="w-full"></div>
+                    </div>
+
+                    <!-- Sidebar Info Details -->
+                    <div class="lg:col-span-4 bg-slate-50 border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2 border-b border-slate-200 pb-2">
+                            <i class="fa-solid fa-circle-info text-emerald-600"></i> Informasi Titik Terpilih
+                        </h3>
+
+                        <div id="selectedBinCard" class="space-y-3">
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 text-center text-slate-500 py-8">
+                                <i class="fa-solid fa-hand-pointer text-3xl text-slate-300 mb-2"></i>
+                                <p class="text-xs">Klik salah satu penanda tempat sampah di peta atau tombol pada daftar sampel di atas untuk melihat detail.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Waste Sorting Guide Section -->
+        <section id="panduan" class="py-12 bg-slate-50 border-b border-slate-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-3xl mx-auto mb-10">
+                    <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-600 mb-1">
+                        <i class="fa-solid fa-book-open"></i> Panduan Pemilahan
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Edukasi & Klasifikasi Sampah Kampus</h2>
+                    <p class="text-slate-600 text-sm mt-2">Pastikan membuang sampah sesuai dengan warna dan jenis tempat sampah yang tersedia untuk mempermudah proses daur ulang.</p>
+                </div>
+
+                <!-- Tabs Category -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Organik -->
+                    <div class="bg-white rounded-2xl border-2 border-emerald-200 p-5 hover:shadow-md transition">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl font-bold mb-4">
+                            <i class="fa-solid fa-apple-whole"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-lg">1. Sampah Organik</h3>
+                        <p class="text-xs text-slate-500 mt-1 mb-3">Warna Tempat Sampah: <strong class="text-emerald-600">HIJAU</strong></p>
+                        <p class="text-xs text-slate-600 mb-4">Sampah yang mudah terurai secara alami dan dapat diolah menjadi kompos pupuk tanaman kampus.</p>
+                        <div class="space-y-1.5">
+                            <div class="text-xs bg-emerald-50 text-emerald-800 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
+                                <i class="fa-solid fa-check text-emerald-600"></i> Sisa Makanan & Buah
+                            </div>
+                            <div class="text-xs bg-emerald-50 text-emerald-800 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
+                                <i class="fa-solid fa-check text-emerald-600"></i> Daun & Ranting Gugur
+                            </div>
+                            <div class="text-xs bg-emerald-50 text-emerald-800 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
+                                <i class="fa-solid fa-check text-emerald-600"></i> Tisu Bekas & Ampas Kopi
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Anorganik -->
+                    <div class="bg-white rounded-2xl border-2 border-amber-200 p-5 hover:shadow-md transition">
+                        <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl font-bold mb-4">
+                            <i class="fa-solid fa-bottle-water"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-lg">2. Sampah Anorganik</h3>
+                        <p class="text-xs text-slate-500 mt-1 mb-3">Warna Tempat Sampah: <strong class="text-amber-600">KUNING</strong></p>
+                        <p class="text-xs text-slate-600 mb-4">Sampah yang sulit terurai secara alami tetapi dapat didaur ulang menjadi barang bernilai ekonomis.</p>
+                        <div class="space-y-1.5">
+                            <div class="text-xs bg-amber-50 text-amber-800 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
+                                <i class="fa-solid fa-check text-amber-600"></i> Botol Plastik & Gelas Mineral
+                            </div>
+                            <div class="text-xs bg-amber-50 text-amber-800 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
+                                <i class="fa-solid fa-check text-amber-600"></i> Kantong Plastik & Kemasan Snack
+                            </div>
+                            <div class="text-xs bg-amber-50 text-amber-800 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
+                                <i class="fa-solid fa-check text-amber-600"></i> Sedotan & Sendok Plastik
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kertas & Karton -->
+                    <div class="bg-white rounded-2xl border-2 border-blue-200 p-5 hover:shadow-md transition">
+                        <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl font-bold mb-4">
+                            <i class="fa-solid fa-box-archive"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-lg">3. Kertas & Karton</h3>
+                        <p class="text-xs text-slate-500 mt-1 mb-3">Warna Tempat Sampah: <strong class="text-blue-600">BIRU</strong></p>
+                        <p class="text-xs text-slate-600 mb-4">Kertas bersih tanpa kontaminasi minyak atau cairan yang dapat didaur ulang kembali.</p>
+                        <div class="space-y-1.5">
+                            <div class="text-xs bg-blue-50 text-blue-800 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
+                                <i class="fa-solid fa-check text-blue-600"></i> Kertas HVS, Brosur, & Modul
+                            </div>
+                            <div class="text-xs bg-blue-50 text-blue-800 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
+                                <i class="fa-solid fa-check text-blue-600"></i> Kardus & Karton Kemasan
+                            </div>
+                            <div class="text-xs bg-blue-50 text-blue-800 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
+                                <i class="fa-solid fa-check text-blue-600"></i> Buku Bekas & Koran
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- B3 / Berbahaya -->
+                    <div class="bg-white rounded-2xl border-2 border-rose-200 p-5 hover:shadow-md transition">
+                        <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center text-xl font-bold mb-4">
+                            <i class="fa-solid fa-biohazard"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-lg">4. B3 & Bahan Berbahaya</h3>
+                        <p class="text-xs text-slate-500 mt-1 mb-3">Warna Tempat Sampah: <strong class="text-rose-600">MERAH</strong></p>
+                        <p class="text-xs text-slate-600 mb-4">Limbah yang mengandung bahan beracun dan membutuhkan penanganan khusus petugas.</p>
+                        <div class="space-y-1.5">
+                            <div class="text-xs bg-rose-50 text-rose-800 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
+                                <i class="fa-solid fa-check text-rose-600"></i> Baterai Bekas & Lampu Neon
+                            </div>
+                            <div class="text-xs bg-rose-50 text-rose-800 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
+                                <i class="fa-solid fa-check text-rose-600"></i> Masker Bekas & Sarung Tangan
+                            </div>
+                            <div class="text-xs bg-rose-50 text-rose-800 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
+                                <i class="fa-solid fa-check text-rose-600"></i> Botol Cairan Kimia Laboratorium
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Waste Reporting Form Section -->
+        <section id="lapor" class="py-12 bg-white border-b border-slate-200">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-8">
+                    <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-600 mb-1">
+                        <i class="fa-solid fa-bullhorn"></i> Form Laporan Sampah
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Pelaporan Kebersihan Kampus UNTAD</h2>
+                    <p class="text-slate-600 text-sm mt-1">Temukan tempat sampah yang penuh atau sampah berserakan? Kirimkan laporan agar segera ditangani oleh petugas kebersihan.</p>
+                </div>
+
+                <form id="reportForm" onsubmit="handleReportSubmit(event)" class="bg-slate-50 border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+                    
+                    <!-- Location Selection -->
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-2">
+                            1. Pilih Lokasi / Tempat Sampah UNTAD <span class="text-rose-500">*</span>
+                        </label>
+                        <select id="reportBinId" required class="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm font-medium">
+                            <option value="">-- Pilih Titik Tempat Sampah --</option>
+                            <!-- Options injected by JS -->
+                        </select>
+                    </div>
+
+                    <!-- Problem Category -->
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-2">
+                            2. Jenis Masalah yang Dilaporkan <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label class="flex items-center p-3 rounded-xl border border-slate-300 bg-white cursor-pointer hover:bg-emerald-50/50 hover:border-emerald-300 transition">
+                                <input type="radio" name="problemType" value="Tempat Sampah Penuh" required class="w-4 h-4 text-emerald-600 focus:ring-emerald-500">
+                                <span class="ml-2.5 text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-fill-drip text-amber-500"></i> Tempat Sampah Penuh
+                                </span>
+                            </label>
+                            <label class="flex items-center p-3 rounded-xl border border-slate-300 bg-white cursor-pointer hover:bg-emerald-50/50 hover:border-emerald-300 transition">
+                                <input type="radio" name="problemType" value="Sampah Berserakan" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500">
+                                <span class="ml-2.5 text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-wind text-rose-500"></i> Sampah Berserakan di Sekitar
+                                </span>
+                            </label>
+                            <label class="flex items-center p-3 rounded-xl border border-slate-300 bg-white cursor-pointer hover:bg-emerald-50/50 hover:border-emerald-300 transition">
+                                <input type="radio" name="problemType" value="Tempat Sampah Rusak / Bocor" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500">
+                                <span class="ml-2.5 text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-dumpster-fire text-orange-500"></i> Tempat Sampah Rusak / Bocor
+                                </span>
+                            </label>
+                            <label class="flex items-center p-3 rounded-xl border border-slate-300 bg-white cursor-pointer hover:bg-emerald-50/50 hover:border-emerald-300 transition">
+                                <input type="radio" name="problemType" value="Bau Menyengat / Kotor" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500">
+                                <span class="ml-2.5 text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-face-frown text-purple-500"></i> Bau Menyengat / Perlu Pembersihan
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Reporter Info & Photo Simulation -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-800 mb-1.5">
+                                Nama Lengkap <span class="text-xs text-slate-400 font-normal">(Opsional)</span>
+                            </label>
+                            <input type="text" id="reportName" placeholder="Contoh: Andi Saputra" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-800 mb-1.5">
+                                NIM UNTAD <span class="text-xs text-slate-400 font-normal">(Opsional)</span>
+                            </label>
+                            <input type="text" id="reportNim" placeholder="Contoh: F55121001" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm uppercase">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-800 mb-1.5">
+                                Program Studi / Fakultas
+                            </label>
+                            <select id="reportProdi" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm font-medium">
+                                <option value="">-- Pilih Prodi / Fakultas --</option>
+                                <option value="Teknik Informatika (FT)">Teknik Informatika (FT)</option>
+                                <option value="Teknik Sipil (FT)">Teknik Sipil (FT)</option>
+                                <option value="Teknik Elektro (FT)">Teknik Elektro (FT)</option>
+                                <option value="Teknik Mesin (FT)">Teknik Mesin (FT)</option>
+                                <option value="Biologi / MIPA (FMIPA)">Biologi / MIPA (FMIPA)</option>
+                                <option value="Farmasi (FMIPA)">Farmasi (FMIPA)</option>
+                                <option value="Kedokteran (FK)">Kedokteran (FK)</option>
+                                <option value="Ilmu Hukum (FH)">Ilmu Hukum (FH)</option>
+                                <option value="Manajemen (FEB)">Manajemen (FEB)</option>
+                                <option value="Akuntansi (FEB)">Akuntansi (FEB)</option>
+                                <option value="Agroteknologi (FAPERTA)">Agroteknologi (FAPERTA)</option>
+                                <option value="Ilmu Komunikasi (FISIP)">Ilmu Komunikasi (FISIP)</option>
+                                <option value="Lainnya / Staf UNTAD">Lainnya / Staf UNTAD</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-1.5">
+                            Unggah Foto Laporan
+                        </label>
+                        <input type="file" id="reportPhotoInput" accept="image/*" onchange="previewReportPhoto(event)" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-700 hover:file:bg-emerald-200">
+                    </div>
+
+                    <!-- Photo Preview Box -->
+                    <div id="photoPreviewContainer" class="hidden">
+                        <p class="text-xs font-medium text-slate-600 mb-1">Pratinjau Foto Laporan:</p>
+                        <img id="photoPreviewImg" src="" alt="Preview" class="h-40 rounded-xl object-cover border border-slate-300">
+                    </div>
+
+                    <!-- Description Input -->
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-1.5">
+                            Catatan Tambahan
+                        </label>
+                        <textarea id="reportNotes" rows="3" placeholder="Tuliskan rincian patokan lokasi atau jenis sampah..." class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm"></textarea>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Kirim Laporan Sampah
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Cleaning Staff Dashboard Section -->
+        <section id="dashboard" class="py-12 bg-slate-900 text-white border-b border-slate-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 border-b border-slate-800 pb-6">
+                    <div>
+                        <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-1">
+                            <i class="fa-solid fa-user-shield"></i> Portal Petugas Kebersihan
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Dashboard Penanganan & Pengelolaan</h2>
+                        <p class="text-slate-400 text-sm mt-1">Kelola laporan yang masuk dari mahasiswa & staf kampus Universitas Tadulako.</p>
+                    </div>
+
+                    <!-- Filter Status Buttons -->
+                    <div class="flex flex-wrap gap-2 text-xs">
+                        <button onclick="filterReports('all')" id="filterRepAll" class="px-3 py-2 rounded-xl font-bold bg-emerald-500 text-slate-950 transition">Semua Laporan</button>
+                        <button onclick="filterReports('Baru')" id="filterRepNew" class="px-3 py-2 rounded-xl font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Baru</button>
+                        <button onclick="filterReports('Diproses')" id="filterRepProg" class="px-3 py-2 rounded-xl font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Diproses</button>
+                        <button onclick="filterReports('Selesai')" id="filterRepDone" class="px-3 py-2 rounded-xl font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Selesai</button>
+                    </div>
+                </div>
+
+                <!-- Reports Grid / Table -->
+                <div class="space-y-4" id="staffReportsContainer">
+                    <!-- Dynamic Reports Injected via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Environmental Statistics & Evaluation Section -->
+        <section id="statistik" class="py-12 bg-slate-50 border-b border-slate-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-3xl mx-auto mb-10">
+                    <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-600 mb-1">
+                        <i class="fa-solid fa-chart-line"></i> Evaluasi Kebersihan Kampus
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Statistik & Dampak Lingkungan</h2>
+                    <p class="text-slate-600 text-sm mt-2">Indikator pengukuran keberhasilan penerapan platform digital di lingkungan Universitas Tadulako.</p>
+                </div>
+
+                <!-- KPI Metric Cards -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Temuan Sampah</div>
+                        <div class="text-3xl font-extrabold text-slate-900" id="statTotalReports">18</div>
+                        <div class="text-xs text-emerald-600 font-medium mt-1"><i class="fa-solid fa-arrow-down"></i> -24% dibanding bulan lalu</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Kecepatan Penanganan</div>
+                        <div class="text-3xl font-extrabold text-emerald-600">~ 25 min</div>
+                        <div class="text-xs text-slate-500 font-medium mt-1"><i class="fa-solid fa-clock"></i> Rata-rata waktu tanggap</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Sampah Terpilah (kg)</div>
+                        <div class="text-3xl font-extrabold text-blue-600" id="statSortedWeight">142 kg</div>
+                        <div class="text-xs text-slate-500 font-medium mt-1"><i class="fa-solid fa-recycle"></i> Organik & Anorganik</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Partisipasi Pengguna</div>
+                        <div class="text-3xl font-extrabold text-amber-600">320+</div>
+                        <div class="text-xs text-slate-500 font-medium mt-1"><i class="fa-solid fa-users"></i> Mahasiswa & Staf Aktif</div>
+                    </div>
+                </div>
+
+                <!-- Chart Graphics -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-900 text-base mb-4 flex items-center justify-between">
+                            <span><i class="fa-solid fa-chart-area text-emerald-600 mr-2"></i> Tren Pelaporan Sampah (4 Minggu Terakhir)</span>
+                            <span class="text-xs text-slate-400 font-normal">UNTAD Palu</span>
+                        </h3>
+                        <div class="h-64">
+                            <canvas id="reportsTrendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-900 text-base mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-emerald-600"></i> Komposisi Sampah Terkumpul
+                        </h3>
+                        <div class="h-64 flex items-center justify-center">
+                            <canvas id="wasteCompositionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 text-slate-400 text-xs py-8 border-t border-slate-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <span class="font-bold text-slate-200">Kampus Bersih Digital — Universitas Tadulako</span>
+            </div>
+            <p class="text-slate-500 text-center sm:text-right">
+                "Kampus bersih dimulai dari tindakan kecil yang didukung teknologi."
+            </p>
+        </div>
+    </footer>
+
+    <!-- Presentation Slides Modal (Mencakup Slide 1 sampai Slide 5 dari gambar user) -->
+    <div id="presentationModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 text-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-800 overflow-hidden">
+            <!-- Modal Header -->
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-file-powerpoint text-amber-500 text-xl"></i>
+                    <div>
+                        <h3 class="font-bold text-sm text-white">Susunan Presentasi PPT — Kampus Bersih Digital</h3>
+                        <p class="text-[11px] text-slate-400">Ringkasan Materi Presentasi (Maksimal 5 Slide)</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('presentationModal')" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Slide Nav Tabs -->
+            <div class="flex border-b border-slate-800 bg-slate-900 overflow-x-auto text-xs">
+                <button onclick="switchSlideTab(1)" id="slideBtn1" class="px-4 py-3 font-semibold text-emerald-400 border-b-2 border-emerald-500 whitespace-nowrap">Slide 1: Judul & Masalah</button>
+                <button onclick="switchSlideTab(2)" id="slideBtn2" class="px-4 py-3 font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap">Slide 2: Penyebab & Dampak</button>
+                <button onclick="switchSlideTab(3)" id="slideBtn3" class="px-4 py-3 font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap">Slide 3: Solusi & Alur</button>
+                <button onclick="switchSlideTab(4)" id="slideBtn4" class="px-4 py-3 font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap">Slide 4: Teknologi & Data</button>
+                <button onclick="switchSlideTab(5)" id="slideBtn5" class="px-4 py-3 font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap">Slide 5: Dampak & Pengukuran</button>
+            </div>
+
+            <!-- Slide Content Body -->
+            <div class="p-6 overflow-y-auto space-y-4 text-sm flex-grow">
+                <!-- Slide 1 Content -->
+                <div id="slideContent1" class="space-y-4">
+                    <div class="flex justify-between items-center text-xs text-amber-400 font-mono">
+                        <span>SLIDE 1 DARI 5</span>
+                        <span>Estimasi Durasi: 25 detik</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-emerald-400">Kampus Bersih Digital</h2>
+                    <p class="text-slate-300">Solusi TI untuk mengurangi sampah di lingkungan kampus Universitas Tadulako.</p>
+                    <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/80 space-y-2">
+                        <div class="font-bold text-xs uppercase tracking-wider text-slate-400">Masalah Utama:</div>
+                        <ul class="list-disc list-inside space-y-1 text-slate-300 text-xs">
+                            <li>Sampah tercampur (organik dan anorganik disatukan).</li>
+                            <li>Sampah berserakan di area publik kampus.</li>
+                            <li>Tempat sampah penuh terlambat ditangani oleh petugas kebersihan.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Slide 2 Content -->
+                <div id="slideContent2" class="hidden space-y-4">
+                    <div class="flex justify-between items-center text-xs text-amber-400 font-mono">
+                        <span>SLIDE 2 DARI 5</span>
+                        <span>Estimasi Durasi: 30 detik</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-emerald-400">Penyebab dan Dampak</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/80">
+                            <div class="font-bold text-xs uppercase tracking-wider text-rose-400 mb-2">Penyebab:</div>
+                            <ul class="list-disc list-inside space-y-1 text-slate-300 text-xs">
+                                <li>Kesadaran memilah sampah masih kurang.</li>
+                                <li>Pelaporan sampah belum praktis.</li>
+                                <li>Informasi kondisi tempat sampah terbatas.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/80">
+                            <div class="font-bold text-xs uppercase tracking-wider text-amber-400 mb-2">Dampak:</div>
+                            <ul class="list-disc list-inside space-y-1 text-slate-300 text-xs">
+                                <li>Lingkungan kotor dan kurang nyaman.</li>
+                                <li>Sampah sulit didaur ulang.</li>
+                                <li>Petugas kesulitan menentukan prioritas penanganan.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 Content -->
+                <div id="slideContent3" class="hidden space-y-4">
+                    <div class="flex justify-between items-center text-xs text-amber-400 font-mono">
+                        <span>SLIDE 3 DARI 5</span>
+                        <span>Estimasi Durasi: 50 detik</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-emerald-400">Ide Solusi dan Alur Sistem</h2>
+                    <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/80 space-y-2">
+                        <div class="font-bold text-xs uppercase tracking-wider text-slate-400 mb-1">Isi Sistem:</div>
+                        <ul class="list-disc list-inside space-y-1 text-slate-300 text-xs">
+                            <li>QR Code dan panduan pemilahan sampah di setiap titik.</li>
+                            <li>Pelaporan sampah melalui aplikasi web berbasis lokasi.</li>
+                            <li>Dashboard interaktif untuk petugas kebersihan.</li>
+                            <li>Status laporan transparan dan statistik lingkungan.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-emerald-950/60 p-4 rounded-xl border border-emerald-800/60 text-center">
+                        <div class="text-xs uppercase font-bold text-emerald-400 mb-2">Alur Utama Sistem:</div>
+                        <div class="text-xs sm:text-sm font-semibold text-white">
+                            Pindai QR &rarr; Pilah / Laporkan &rarr; Data Tersimpan &rarr; Petugas Menangani &rarr; Evaluasi
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4 Content -->
+                <div id="slideContent4" class="hidden space-y-4">
+                    <div class="flex justify-between items-center text-xs text-amber-400 font-mono">
+                        <span>SLIDE 4 DARI 5</span>
+                        <span>Estimasi Durasi: 30 detik</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-emerald-400">Teknologi yang Digunakan</h2>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                        <div class="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                            <span class="font-bold text-emerald-400 block">Figma</span>
+                            <span class="text-slate-400 text-[11px]">Prototip Tampilan</span>
+                        </div>
+                        <div class="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                            <span class="font-bold text-emerald-400 block">HTML, CSS, JS</span>
+                            <span class="text-slate-400 text-[11px]">Antarmuka Aplikasi Web</span>
+                        </div>
+                        <div class="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                            <span class="font-bold text-emerald-400 block">Node.js & MySQL</span>
+                            <span class="text-slate-400 text-[11px]">Pemrosesan Data & Database</span>
+                        </div>
+                        <div class="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                            <span class="font-bold text-emerald-400 block">QR Code</span>
+                            <span class="text-slate-400 text-[11px]">Penghubung Lokasi Fisik</span>
+                        </div>
+                        <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 col-span-2 sm:col-span-2">
+                            <span class="font-bold text-emerald-400 block">Peta Digital (Leaflet JS)</span>
+                            <span class="text-slate-400 text-[11px]">Pemetaan Titik Sampah Universitas Tadulako</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 5 Content -->
+                <div id="slideContent5" class="hidden space-y-4">
+                    <div class="flex justify-between items-center text-xs text-amber-400 font-mono">
+                        <span>SLIDE 5 DARI 5</span>
+                        <span>Estimasi Durasi: 45 detik</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-emerald-400">Dampak dan Pengukuran Keberhasilan</h2>
+                    <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/80 space-y-2">
+                        <div class="font-bold text-xs uppercase tracking-wider text-slate-400">Target Dampak:</div>
+                        <ul class="list-disc list-inside space-y-1 text-slate-300 text-xs">
+                            <li>Mengurangi sampah berserakan di area kampus UNTAD.</li>
+                            <li>Meningkatkan ketepatan pemilahan sampah (organik & anorganik).</li>
+                            <li>Mempercepat waktu penanganan oleh petugas kebersihan.</li>
+                            <li>Meningkatkan partisipasi dan kepedulian mahasiswa.</li>
+                        </ul>
+                    </div>
+                    <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-200">
+                        <strong>Penutup Presentation:</strong> "Kampus bersih dimulai dari tindakan kecil yang didukung teknologi."
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 border-t border-slate-800 bg-slate-950 flex justify-between items-center">
+                <button onclick="closeModal('presentationModal')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-semibold transition">Tutup Modal</button>
+                <div class="text-xs text-slate-500 font-mono">Kelompok Tugas TI UNTAD</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Scanner Simulation Modal -->
+    <div id="qrScannerModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative text-center space-y-4">
+            <button onclick="closeModal('qrScannerModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-qrcode"></i>
+            </div>
+            <h3 class="font-bold text-slate-900 text-lg">Simulasi Pemindaian QR Code</h3>
+            <p class="text-xs text-slate-500">Pilih titik tempat sampah UNTAD untuk disimulasikan pindaiannya:</p>
+
+            <div class="space-y-2 max-h-56 overflow-y-auto" id="qrScannerList">
+                <!-- JS Populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- View QR Code Modal -->
+    <div id="qrViewModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl relative text-center space-y-4">
+            <button onclick="closeModal('qrViewModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <h3 class="font-bold text-slate-900 text-base" id="qrModalTitle">QR Code Tempat Sampah</h3>
+            <p class="text-xs text-slate-500" id="qrModalSubtitle">Gedung Rektorat UNTAD</p>
+
+            <!-- QRCode Container -->
+            <div id="qrcodeDisplay" class="flex justify-center p-4 bg-slate-50 rounded-xl border border-slate-200 my-2"></div>
+
+            <p class="text-[11px] text-slate-400">Tempelkan QR Code ini pada bak sampah fisik di lokasi kampus.</p>
+        </div>
+    </div>
+
+
+    <script>
+        // 5 Sample Trash Bins centered at Universitas Tadulako, Palu, Central Sulawesi
+        // UNTAD Coordinates approx: Lat -0.8361, Lng 119.8935
+        const UNTAD_BINS = [
+            {
+                id: 'TB-UNTAD-01',
+                name: 'Gedung Rektorat UNTAD',
+                faculty: 'Pusat Administrasi UNTAD',
+                lat: -0.8361,
+                lng: 119.8935,
+                types: ['Organik', 'Anorganik'],
+                status: 'Normal', // Normal or Penuh
+                lastCleaned: '10 Menit yang lalu'
+            },
+            {
+                id: 'TB-UNTAD-02',
+                name: 'Fakultas Teknik UNTAD',
+                faculty: 'Gedung Utama FT',
+                lat: -0.8380,
+                lng: 119.8950,
+                types: ['Organik', 'Anorganik', 'B3 / Berbahaya'],
+                status: 'Penuh',
+                lastCleaned: '2 Jam yang lalu'
+            },
+            {
+                id: 'TB-UNTAD-03',
+                name: 'Fakultas MIPA UNTAD',
+                faculty: 'Halaman FMIPA',
+                lat: -0.8350,
+                lng: 119.8945,
+                types: ['Organik', 'Anorganik'],
+                status: 'Normal',
+                lastCleaned: '45 Menit yang lalu'
+            },
+            {
+                id: 'TB-UNTAD-04',
+                name: 'Perpustakaan Pusat UNTAD',
+                faculty: 'Area Parkir Perpustakaan',
+                lat: -0.8360,
+                lng: 119.8915,
+                types: ['Anorganik', 'Kertas & Karton'],
+                status: 'Penuh',
+                lastCleaned: '3 Jam yang lalu'
+            },
+            {
+                id: 'TB-UNTAD-05',
+                name: 'Auditorium UNTAD',
+                faculty: 'Depan Gedung Auditorium',
+                lat: -0.8345,
+                lng: 119.8925,
+                types: ['Organik', 'Anorganik', 'B3 / Berbahaya'],
+                status: 'Normal',
+                lastCleaned: '15 Menit yang lalu'
+            }
+        ];
+
+        // Sample initial reports dataset
+        let reportsData = [
+            {
+                id: 'REP-101',
+                binId: 'TB-UNTAD-02',
+                locationName: 'Fakultas Teknik UNTAD',
+                problemType: 'Tempat Sampah Penuh',
+                reporter: 'Rahmat (Teknik Informatika)',
+                time: '25 Menit yang lalu',
+                status: 'Baru', // Baru, Diproses, Selesai
+                notes: 'Banyak tempat minum plastik menumpuk melebihi kapasitas bak.',
+                weight: 0
+            },
+            {
+                id: 'REP-102',
+                binId: 'TB-UNTAD-04',
+                locationName: 'Perpustakaan Pusat UNTAD',
+                problemType: 'Sampah Berserakan',
+                reporter: 'Anisa (MIPA)',
+                time: '40 Menit yang lalu',
+                status: 'Diproses',
+                notes: 'Ada tumpukan kertas kardus bekas di samping tempat sampah.',
+                weight: 0
+            },
+            {
+                id: 'REP-103',
+                binId: 'TB-UNTAD-01',
+                locationName: 'Gedung Rektorat UNTAD',
+                problemType: 'Bau Menyengat / Kotor',
+                reporter: 'Staf Rektorat',
+                time: '2 Jam yang lalu',
+                status: 'Selesai',
+                notes: 'Telah dibersihkan dan disemprot disinfektan oleh tim kebersihan.',
+                weight: 12
+            }
+        ];
+
+        let map;
+        let mapMarkers = [];
+
+        function initMap() {
+            // UNTAD Palu Center Coordinates
+            const untadCenter = [-0.8361, 119.8935];
+            
+            map = L.map('map').setView(untadCenter, 16);
+
+            // OpenStreetMap tile layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors | Universitas Tadulako'
+            }).addTo(map);
+
+            renderMarkers('all');
+        }
+
+        function createCustomIcon(status) {
+            const colorClass = status === 'Normal' ? '#22c55e' : '#f43f5e';
+            const iconHtml = `
+                <div style="background-color: ${colorClass}; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; border: 3px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);">
+                    <i class="fa-solid ${status === 'Normal' ? 'fa-trash-can' : 'fa-triangle-exclamation'}" style="font-size: 14px;"></i>
+                </div>
+            `;
+            return L.divIcon({
+                html: iconHtml,
+                className: 'custom-leaflet-icon',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+        }
+
+        function renderMarkers(filter) {
+            // Clear existing markers
+            mapMarkers.forEach(m => map.removeLayer(m));
+            mapMarkers = [];
+
+            UNTAD_BINS.forEach(bin => {
+                if (filter === 'normal' && bin.status !== 'Normal') return;
+                if (filter === 'full' && bin.status !== 'Penuh') return;
+
+                const marker = L.marker([bin.lat, bin.lng], {
+                    icon: createCustomIcon(bin.status)
+                }).addTo(map);
+
+                const popupContent = `
+                    <div class="p-2 space-y-1 text-slate-800">
+                        <div class="text-[10px] font-bold text-emerald-600 uppercase">${bin.id}</div>
+                        <h4 class="font-bold text-sm">${bin.name}</h4>
+                        <p class="text-xs text-slate-500">${bin.faculty}</p>
+                        <div class="pt-1 flex items-center gap-1">
+                            <span class="text-[10px] px-2 py-0.5 rounded font-bold ${bin.status === 'Normal' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+                                ${bin.status === 'Normal' ? 'Normal / Bersih' : 'Perlu Penanganan'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent);
+                marker.on('click', () => {
+                    selectBinDetail(bin.id);
+                });
+
+                mapMarkers.push(marker);
+            });
+        }
+
+        function filterMap(type) {
+            document.getElementById('btnFilterAll').className = 'px-3 py-1.5 rounded-lg font-medium transition ' + (type === 'all' ? 'bg-white text-slate-800 shadow-sm font-bold' : 'text-slate-600 hover:bg-white/60');
+            document.getElementById('btnFilterNormal').className = 'px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ' + (type === 'normal' ? 'bg-white text-slate-800 shadow-sm font-bold' : 'text-slate-600 hover:bg-white/60');
+            document.getElementById('btnFilterFull').className = 'px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ' + (type === 'full' ? 'bg-white text-slate-800 shadow-sm font-bold' : 'text-slate-600 hover:bg-white/60');
+            renderMarkers(type);
+        }
+
+        function selectBinDetail(binId) {
+            const bin = UNTAD_BINS.find(b => b.id === binId);
+            if (!bin) return;
+
+            // Pan map to point
+            if (map) {
+                map.flyTo([bin.lat, bin.lng], 17, { duration: 1 });
+            }
+
+            const card = document.getElementById('selectedBinCard');
+            card.innerHTML = `
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[11px] font-bold text-emerald-600 font-mono">${bin.id}</span>
+                            <h4 class="font-bold text-slate-900 text-base">${bin.name}</h4>
+                            <p class="text-xs text-slate-500">${bin.faculty}</p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${bin.status === 'Normal' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                            ${bin.status}
+                        </span>
+                    </div>
+
+                    <div class="border-t border-slate-100 pt-2 text-xs space-y-1.5">
+                        <div class="flex justify-between text-slate-600">
+                            <span>Jenis Tempat Sampah:</span>
+                            <span class="font-semibold text-slate-800">${bin.types.join(', ')}</span>
+                        </div>
+                        <div class="flex justify-between text-slate-600">
+                            <span>Pembersihan Terakhir:</span>
+                            <span class="font-medium text-slate-700">${bin.lastCleaned}</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 flex gap-2">
+                        <button onclick="openQrModal('${bin.id}')" class="flex-1 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-qrcode"></i> Lihat QR Code
+                        </button>
+                        <button onclick="fillReportForm('${bin.id}')" class="flex-1 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-paper-plane"></i> Laporkan
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function populateBinDropdownsAndHero() {
+            const heroList = document.getElementById('heroBinList');
+            const dropdown = document.getElementById('reportBinId');
+            const qrScanList = document.getElementById('qrScannerList');
+
+            let heroHtml = '';
+            let dropdownHtml = '<option value="">-- Pilih Titik Tempat Sampah UNTAD --</option>';
+            let qrListHtml = '';
+
+            UNTAD_BINS.forEach(bin => {
+                // Hero list
+                heroHtml += `
+                    <div onclick="selectBinDetail('${bin.id}'); scrollToSection('peta');" class="p-3 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl cursor-pointer transition flex justify-between items-center text-xs">
+                        <div>
+                            <div class="font-bold text-white flex items-center gap-1.5">
+                                <i class="fa-solid fa-location-dot text-emerald-400"></i> ${bin.name}
+                            </div>
+                            <div class="text-[11px] text-slate-300 font-mono">${bin.id} • ${bin.faculty}</div>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${bin.status === 'Normal' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">
+                            ${bin.status}
+                        </span>
+                    </div>
+                `;
+
+                // Dropdown
+                dropdownHtml += `<option value="${bin.id}">${bin.id} - ${bin.name} (${bin.faculty})</option>`;
+
+                // QR Scan list
+                qrListHtml += `
+                    <div onclick="simulateQRScan('${bin.id}')" class="p-3 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-xl cursor-pointer text-left transition flex items-center justify-between">
+                        <div>
+                            <div class="font-bold text-xs text-slate-900">${bin.name}</div>
+                            <div class="text-[11px] text-slate-500 font-mono">${bin.id}</div>
+                        </div>
+                        <i class="fa-solid fa-arrow-right text-emerald-600 text-xs"></i>
+                    </div>
+                `;
+            });
+
+            heroList.innerHTML = heroHtml;
+            dropdown.innerHTML = dropdownHtml;
+            qrScanList.innerHTML = qrListHtml;
+        }
+
+        function initCharts() {
+            // Chart 1: Reports Trend Chart
+            const ctxTrend = document.getElementById('reportsTrendChart').getContext('2d');
+            new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4 (Sekarang)'],
+                    datasets: [{
+                        label: 'Jumlah Temuan Laporan Sampah',
+                        data: [28, 22, 19, 18],
+                        borderColor: '#16a34a',
+                        backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: '#16a34a',
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // Chart 2: Waste Composition Chart
+            const ctxComp = document.getElementById('wasteCompositionChart').getContext('2d');
+            new Chart(ctxComp, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Anorganik (Plastik/Botol)', 'Organik (Sisa Makanan)', 'Kertas & Karton', 'Limbah B3'],
+                    datasets: [{
+                        data: [45, 30, 18, 7],
+                        backgroundColor: ['#f59e0b', '#22c55e', '#3b82f6', '#f43f5e']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        function fillReportForm(binId) {
+            document.getElementById('reportBinId').value = binId;
+            scrollToSection('lapor');
+        }
+
+        function previewReportPhoto(e) {
+            const file = e.target.files[0];
+            const container = document.getElementById('photoPreviewContainer');
+            const img = document.getElementById('photoPreviewImg');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    img.src = event.target.result;
+                    container.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        function handleReportSubmit(e) {
+            e.preventDefault();
+            const binId = document.getElementById('reportBinId').value;
+            const problemType = document.querySelector('input[name="problemType"]:checked')?.value || 'Tempat Sampah Penuh';
+            
+            const rawName = document.getElementById('reportName').value.trim();
+            const rawNim = document.getElementById('reportNim').value.trim().toUpperCase();
+            const rawProdi = document.getElementById('reportProdi').value;
+
+            // NIM Validation logic: Prevent typing random short numbers like "123"
+            if (rawNim !== '') {
+                // UNTAD NIM format generally starts with a Kode Program Studi letter (e.g. F55121001, A11120001, C20119001) or contains standard 8+ length
+                const isNimValid = /^[A-Za-z0-9]{8,12}$/.test(rawNim) && !/^\d{1,5}$/.test(rawNim);
+                if (!isNimValid) {
+                    Swal.fire({
+                        title: 'Format NIM Tidak Valid',
+                        text: 'Silakan masukkan NIM Universitas Tadulako yang sesuai format standar (Contoh: F55121001 atau A11120001).',
+                        icon: 'warning',
+                        confirmButtonColor: '#16a34a'
+                    });
+                    return;
+                }
+            }
+
+            // Construct formatted display name: "Andi Saputra (F55121001) - Teknik Informatika (FT)"
+            let reporter = 'Mahasiswa UNTAD';
+            if (rawName || rawNim || rawProdi) {
+                const namePart = rawName || 'Mahasiswa';
+                const nimPart = rawNim ? ` (${rawNim})` : '';
+                const prodiPart = rawProdi ? ` - ${rawProdi}` : '';
+                reporter = `${namePart}${nimPart}${prodiPart}`;
+            }
+
+            const notes = document.getElementById('reportNotes').value || 'Tidak ada catatan tambahan.';
+
+            const bin = UNTAD_BINS.find(b => b.id === binId);
+            if (!bin) {
+                Swal.fire('Perhatian', 'Silakan pilih lokasi tempat sampah terlebih dahulu.', 'warning');
+                return;
+            }
+
+            // Update local bin status
+            bin.status = 'Penuh';
+
+            // Push to reports list
+            const newRep = {
+                id: 'REP-' + Math.floor(100 + Math.random() * 900),
+                binId: bin.id,
+                locationName: bin.name,
+                problemType: problemType,
+                reporter: reporter,
+                time: 'Baru saja',
+                status: 'Baru',
+                notes: notes,
+                weight: 0
+            };
+
+            reportsData.unshift(newRep);
+
+            // Re-render
+            renderMarkers('all');
+            renderStaffReports('all');
+            updateStats();
+
+            Swal.fire({
+                title: 'Laporan Berhasil Terkirim!',
+                text: `Laporan dari ${reporter} untuk ${bin.name} telah diteruskan ke Dashboard Petugas Kebersihan UNTAD.`,
+                icon: 'success',
+                confirmButtonColor: '#16a34a'
+            });
+
+            // Reset form
+            document.getElementById('reportForm').reset();
+            document.getElementById('photoPreviewContainer').classList.add('hidden');
+        }
+
+        function renderStaffReports(statusFilter) {
+            const container = document.getElementById('staffReportsContainer');
+            let filtered = reportsData;
+
+            if (statusFilter && statusFilter !== 'all') {
+                filtered = reportsData.filter(r => r.status === statusFilter);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-500 bg-slate-800/40 rounded-xl border border-slate-800">
+                        <i class="fa-solid fa-clipboard-check text-2xl mb-2 text-slate-600"></i>
+                        <p class="text-xs">Tidak ada laporan dengan status ini.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(rep => {
+                let badgeBg = 'bg-rose-500/20 text-rose-300 border-rose-500/30';
+                if (rep.status === 'Diproses') badgeBg = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+                if (rep.status === 'Selesai') badgeBg = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+
+                html += `
+                    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row justify-between md:items-center gap-4">
+                        <div class="space-y-1.5 flex-grow">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-mono font-bold text-emerald-400">${rep.id}</span>
+                                <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${badgeBg}">${rep.status}</span>
+                                <span class="text-xs text-slate-400">• ${rep.time}</span>
+                            </div>
+                            <h4 class="font-bold text-white text-base">${rep.locationName} <span class="text-xs font-mono font-normal text-slate-400">(${rep.binId})</span></h4>
+                            <p class="text-xs text-slate-300"><strong>Masalah:</strong> ${rep.problemType}</p>
+                            <p class="text-xs text-slate-400"><strong>Pelapor:</strong> ${rep.reporter}</p>
+                            <p class="text-xs text-slate-400 italic">"${rep.notes}"</p>
+                        </div>
+
+                        <!-- Action Buttons for Staff -->
+                        <div class="flex flex-wrap md:flex-col gap-2 min-w-[160px] border-t md:border-t-0 md:border-l border-slate-700 pt-3 md:pt-0 md:pl-4">
+                            ${rep.status === 'Baru' ? `
+                                <button onclick="updateReportStatus('${rep.id}', 'Diproses')" class="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-spinner"></i> Tangani Laporan
+                                </button>
+                            ` : ''}
+
+                            ${rep.status === 'Diproses' ? `
+                                <button onclick="completeReportPrompt('${rep.id}')" class="w-full py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-check"></i> Selesaikan Laporan
+                                </button>
+                            ` : ''}
+
+                            ${rep.status === 'Selesai' ? `
+                                <div class="text-xs text-emerald-400 font-semibold text-center py-1">
+                                    <i class="fa-solid fa-circle-check"></i> Sampah Ditangani ${rep.weight ? `(${rep.weight} kg)` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function updateReportStatus(repId, newStatus) {
+            const rep = reportsData.find(r => r.id === repId);
+            if (rep) {
+                rep.status = newStatus;
+                renderStaffReports('all');
+                Swal.fire({
+                    title: 'Status Diperbarui',
+                    text: `Laporan ${repId} sekarang berstatus '${newStatus}'.`,
+                    icon: 'info',
+                    confirmButtonColor: '#16a34a'
+                });
+            }
+        }
+
+        function completeReportPrompt(repId) {
+            Swal.fire({
+                title: 'Selesaikan & Timbang Sampah',
+                text: 'Masukkan berat sampah terpilah yang berhasil diangkut (dalam kg):',
+                input: 'number',
+                inputPlaceholder: 'Contoh: 15',
+                showCancelButton: true,
+                confirmButtonText: 'Simpan & Selesai',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#16a34a'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const weight = parseFloat(result.value) || 0;
+                    const rep = reportsData.find(r => r.id === repId);
+                    if (rep) {
+                        rep.status = 'Selesai';
+                        rep.weight = weight;
+
+                        // Also reset bin status to normal if no other active reports
+                        const bin = UNTAD_BINS.find(b => b.id === rep.binId);
+                        if (bin) {
+                            bin.status = 'Normal';
+                            bin.lastCleaned = 'Baru Saja';
+                        }
+
+                        renderMarkers('all');
+                        renderStaffReports('all');
+                        updateStats();
+
+                        Swal.fire('Selesai!', `Laporan telah diselesaikan. +${weight} kg sampah tercatat ke statistik.`, 'success');
+                    }
+                }
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('statTotalReports').innerText = reportsData.length;
+            const totalWeight = reportsData.reduce((acc, r) => acc + (r.weight || 0), 120);
+            document.getElementById('statSortedWeight').innerText = `${totalWeight} kg`;
+        }
+
+        function filterReports(type) {
+            const btns = {
+                'all': 'filterRepAll',
+                'Baru': 'filterRepNew',
+                'Diproses': 'filterRepProg',
+                'Selesai': 'filterRepDone'
+            };
+
+            Object.keys(btns).forEach(key => {
+                const el = document.getElementById(btns[key]);
+                if (key === type) {
+                    el.className = 'px-3 py-2 rounded-xl font-bold bg-emerald-500 text-slate-950 transition';
+                } else {
+                    el.className = 'px-3 py-2 rounded-xl font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+                }
+            });
+
+            renderStaffReports(type);
+        }
+
+        // Modal Helpers
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function switchSlideTab(num) {
+            for (let i = 1; i <= 5; i++) {
+                const btn = document.getElementById(`slideBtn${i}`);
+                const content = document.getElementById(`slideContent${i}`);
+                if (i === num) {
+                    btn.className = 'px-4 py-3 font-semibold text-emerald-400 border-b-2 border-emerald-500 whitespace-nowrap';
+                    content.classList.remove('hidden');
+                } else {
+                    btn.className = 'px-4 py-3 font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap';
+                    content.classList.add('hidden');
+                }
+            }
+        }
+
+        function openQrModal(binId) {
+            const bin = UNTAD_BINS.find(b => b.id === binId);
+            if (!bin) return;
+
+            document.getElementById('qrModalTitle').innerText = `QR Code: ${bin.id}`;
+            document.getElementById('qrModalSubtitle').innerText = `${bin.name} (${bin.faculty})`;
+
+            const qrcodeContainer = document.getElementById('qrcodeDisplay');
+            qrcodeContainer.innerHTML = ''; // Clear previous
+
+            // Generate QR Code with qrcode.js
+            new QRCode(qrcodeContainer, {
+                text: `https://kampusbersih.untad.ac.id/scan?id=${bin.id}`,
+                width: 160,
+                height: 160,
+                colorDark: '#0f172a',
+                colorLight: '#ffffff'
+            });
+
+            openModal('qrViewModal');
+        }
+
+        function simulateQRScan(binId) {
+            closeModal('qrScannerModal');
+            selectBinDetail(binId);
+            scrollToSection('peta');
+            Swal.fire({
+                title: 'QR Code Terdeteksi!',
+                text: `Terhubung ke titik: ${binId}`,
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+
+        function scrollToSection(id) {
+            document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Initialize App on Window Load
+        window.onload = function() {
+            populateBinDropdownsAndHero();
+            initMap();
+            initCharts();
+            renderStaffReports('all');
+            selectBinDetail('TB-UNTAD-01');
+        };
+    </script>
+</body>
+</html>
