@@ -85,21 +85,29 @@
                 </div>
 
                 <!-- Desktop Nav Navigation Links -->
-                <nav class="hidden md:flex items-center space-x-1 lg:space-x-4 text-sm font-medium">
+                <nav class="hidden md:flex items-center space-x-1 lg:space-x-3 text-sm font-medium">
                     <button onclick="scrollToSection('peta')" class="px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-slate-100 transition">Peta Digital</button>
                     <button onclick="scrollToSection('panduan')" class="px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-slate-100 transition">Panduan Pemilahan</button>
                     <button onclick="scrollToSection('lapor')" class="px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-slate-100 transition">Laporkan Sampah</button>
-                    <button onclick="scrollToSection('dashboard')" class="px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-slate-100 transition">Dashboard Petugas</button>
                     <button onclick="scrollToSection('statistik')" class="px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-slate-100 transition">Statistik</button>
+                    <button onclick="handleStaffNavClick()" id="navStaffBtn" class="px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-slate-100 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-lock text-slate-400"></i> Portal Petugas
+                    </button>
+                    <button onclick="logoutStaff()" id="navLogoutBtn" class="hidden px-2.5 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 text-xs font-semibold border border-rose-200 transition flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> Keluar
+                    </button>
                 </nav>
 
                 <!-- Action Buttons & Presentation Doc -->
                 <div class="flex items-center gap-2">
-                    <button onclick="openModal('presentationModal')" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 text-xs sm:text-sm font-semibold transition shadow-sm">
-                        <i class="fa-solid fa-file-powerpoint text-amber-600"></i>
-                        <span>Slide PPT</span>
+                    <button onclick="handleStaffNavClick()" id="mobileStaffBtn" class="md:hidden inline-flex items-center justify-center px-2.5 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-semibold transition" title="Portal Petugas">
+                        <i class="fa-solid fa-user-shield text-emerald-600 mr-1"></i> Petugas
                     </button>
-                    <button onclick="openModal('qrScannerModal')" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold transition shadow-md shadow-emerald-600/20">
+                    <button onclick="openModal('presentationModal')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 text-xs sm:text-sm font-semibold transition shadow-sm">
+                        <i class="fa-solid fa-file-powerpoint text-amber-600"></i>
+                        <span class="hidden xs:inline">Slide PPT</span>
+                    </button>
+                    <button onclick="openModal('qrScannerModal')" class="inline-flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold transition shadow-md shadow-emerald-600/20">
                         <i class="fa-solid fa-qrcode"></i>
                         <span class="hidden sm:inline">Pindai QR</span>
                     </button>
@@ -398,7 +406,14 @@
                             <label class="block text-sm font-bold text-slate-800 mb-1.5">
                                 Nama Lengkap <span class="text-xs text-slate-400 font-normal">(Opsional)</span>
                             </label>
-                            <input type="text" id="reportName" placeholder="Contoh: Andi Saputra" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm">
+                            <input type="text" id="reportName" placeholder="Contoh: Andi Saputra"
+                                onkeydown="validateNameKey(event)"
+                                oninput="validateNameInput(this)"
+                                class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm transition">
+                            <p id="reportNameError" class="text-xs text-rose-500 font-medium mt-1 hidden items-center gap-1">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                                <span>Hanya huruf yang diperbolehkan (tidak bisa memasukkan angka).</span>
+                            </p>
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-slate-800 mb-1.5">
@@ -461,27 +476,139 @@
         <!-- Cleaning Staff Dashboard Section -->
         <section id="dashboard" class="py-12 bg-slate-900 text-white border-b border-slate-800">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 border-b border-slate-800 pb-6">
-                    <div>
-                        <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-1">
-                            <i class="fa-solid fa-user-shield"></i> Portal Petugas Kebersihan
-                        </div>
-                        <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Dashboard Penanganan & Pengelolaan</h2>
-                        <p class="text-slate-400 text-sm mt-1">Kelola laporan yang masuk dari mahasiswa & staf kampus Universitas Tadulako.</p>
+                <!-- Unauthenticated / Locked Visitor View -->
+                <div id="staffLockedView" class="max-w-4xl mx-auto text-center py-8 sm:py-12 px-4">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold mb-6">
+                        <i class="fa-solid fa-shield-halved text-emerald-400"></i> Area Khusus Petugas Kebersihan UNTAD
                     </div>
+                    
+                    <div class="bg-gradient-to-b from-slate-800/90 to-slate-800/40 border border-slate-700 p-8 sm:p-12 rounded-3xl shadow-2xl backdrop-blur-sm relative overflow-hidden">
+                        <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto text-2xl mb-5 shadow-lg shadow-emerald-500/10">
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
 
-                    <!-- Filter Status Buttons -->
-                    <div class="flex flex-wrap gap-2 text-xs">
-                        <button onclick="filterReports('all')" id="filterRepAll" class="px-3 py-2 rounded-xl font-bold bg-emerald-500 text-slate-950 transition">Semua Laporan</button>
-                        <button onclick="filterReports('Baru')" id="filterRepNew" class="px-3 py-2 rounded-xl font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Baru</button>
-                        <button onclick="filterReports('Diproses')" id="filterRepProg" class="px-3 py-2 rounded-xl font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Diproses</button>
-                        <button onclick="filterReports('Selesai')" id="filterRepDone" class="px-3 py-2 rounded-xl font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Selesai</button>
+                        <h3 class="text-2xl sm:text-3xl font-extrabold text-white mb-3">Portal Internal Petugas Kebersihan</h3>
+                        <p class="text-slate-300 text-sm max-w-xl mx-auto mb-8 leading-relaxed">
+                            Portal ini terpisah dari dashboard publik pengunjung. Khusus digunakan oleh petugas kebersihan & sarpras Universitas Tadulako untuk menindaklanjuti laporan sampah kampus.
+                        </p>
+
+                        <!-- Feature Highlights -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left max-w-2xl mx-auto mb-8">
+                            <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/60">
+                                <i class="fa-solid fa-bell text-amber-400 text-lg mb-2 block"></i>
+                                <h4 class="font-bold text-xs text-white">Antrean Laporan</h4>
+                                <p class="text-[11px] text-slate-400 mt-1">Laporan dari mahasiswa masuk secara real-time.</p>
+                            </div>
+                            <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/60">
+                                <i class="fa-solid fa-list-check text-emerald-400 text-lg mb-2 block"></i>
+                                <h4 class="font-bold text-xs text-white">Tindakan Cepat</h4>
+                                <p class="text-[11px] text-slate-400 mt-1">Ubah status laporan menjadi Diproses & Selesai.</p>
+                            </div>
+                            <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/60">
+                                <i class="fa-solid fa-scale-balanced text-teal-400 text-lg mb-2 block"></i>
+                                <h4 class="font-bold text-xs text-white">Input Timbangan</h4>
+                                <p class="text-[11px] text-slate-400 mt-1">Catat berat sampah terpilah untuk rekap data kampus.</p>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                            <button onclick="openModal('staffLoginModal')" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-right-to-bracket"></i> Masuk Sebagai Petugas
+                            </button>
+                            <button onclick="loginStaffDemo()" class="w-full sm:w-auto px-5 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold text-sm transition border border-slate-600 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-bolt text-amber-400"></i> Coba Akun Demo
+                            </button>
+                        </div>
+
+                        <p class="text-[11px] text-slate-400 mt-5">
+                            Pengunjung umum dapat melihat <a href="javascript:void(0)" onclick="scrollToSection('peta')" class="text-emerald-400 underline font-medium">Peta Sebaran Tempat Sampah</a> atau mengirim laporan di menu <a href="javascript:void(0)" onclick="scrollToSection('lapor')" class="text-emerald-400 underline font-medium">Laporkan Sampah</a>.
+                        </p>
                     </div>
                 </div>
 
-                <!-- Reports Grid / Table -->
-                <div class="space-y-4" id="staffReportsContainer">
-                    <!-- Dynamic Reports Injected via JS -->
+                <!-- Authenticated Cleaning Staff Portal View -->
+                <div id="staffActiveView" class="hidden">
+                    <!-- Staff Profile & Session Topbar -->
+                    <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 sm:p-5 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-lg">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center text-xl font-bold shadow-md shadow-emerald-600/20">
+                                <i class="fa-solid fa-user-shield"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="font-extrabold text-white text-base sm:text-lg" id="staffDisplayName">Bpk. Suherman</h3>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Sesi Petugas Aktif
+                                    </span>
+                                </div>
+                                <div class="text-xs text-slate-400 flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                                    <span><i class="fa-solid fa-id-badge text-emerald-400 mr-1"></i><span id="staffDisplayId">NIP. 19850720 201001 1 008</span></span>
+                                    <span><i class="fa-solid fa-building text-slate-400 mr-1"></i>Tim Kebersihan & Sarpras UNTAD</span>
+                                    <span><i class="fa-solid fa-clock text-slate-400 mr-1"></i>Shift Aktif (Bumi Tadulako)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 self-end md:self-auto">
+                            <button onclick="scrollToSection('peta')" class="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-map-location-dot text-emerald-400"></i> Pantau Peta
+                            </button>
+                            <button onclick="logoutStaff()" class="px-3.5 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 text-xs font-bold transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i> Keluar Portal
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Staff Metric Summary Cards -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        <div class="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl">
+                            <div class="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Total Laporan Masuk</div>
+                            <div class="text-2xl sm:text-3xl font-extrabold text-white mt-1" id="staffMetricTotal">0</div>
+                        </div>
+                        <div class="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl">
+                            <div class="text-[11px] text-amber-400 font-medium uppercase tracking-wider flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full bg-amber-400"></span> Butuh Penanganan
+                            </div>
+                            <div class="text-2xl sm:text-3xl font-extrabold text-amber-300 mt-1" id="staffMetricNew">0</div>
+                        </div>
+                        <div class="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl">
+                            <div class="text-[11px] text-blue-400 font-medium uppercase tracking-wider flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full bg-blue-400"></span> Sedang Diproses
+                            </div>
+                            <div class="text-2xl sm:text-3xl font-extrabold text-blue-300 mt-1" id="staffMetricProcess">0</div>
+                        </div>
+                        <div class="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl">
+                            <div class="text-[11px] text-emerald-400 font-medium uppercase tracking-wider flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Telah Diselesaikan
+                            </div>
+                            <div class="text-2xl sm:text-3xl font-extrabold text-emerald-300 mt-1" id="staffMetricDone">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Title & Filter Controls -->
+                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b border-slate-800 pb-5">
+                        <div>
+                            <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-1">
+                                <i class="fa-solid fa-list-check"></i> Antrean Penanganan Sampah
+                            </div>
+                            <h2 class="text-2xl font-extrabold text-white">Daftar Laporan Kampus</h2>
+                            <p class="text-slate-400 text-xs mt-1">Ubah status penanganan dan catat bobot sampah setelah pembersihan lokasi.</p>
+                        </div>
+
+                        <!-- Filter Status Buttons -->
+                        <div class="flex flex-wrap gap-2 text-xs">
+                            <button onclick="filterReports('all')" id="filterRepAll" class="px-3.5 py-2 rounded-xl font-bold bg-emerald-500 text-slate-950 transition">Semua</button>
+                            <button onclick="filterReports('Baru')" id="filterRepNew" class="px-3.5 py-2 rounded-xl font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Baru</button>
+                            <button onclick="filterReports('Diproses')" id="filterRepProg" class="px-3.5 py-2 rounded-xl font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Diproses</button>
+                            <button onclick="filterReports('Selesai')" id="filterRepDone" class="px-3.5 py-2 rounded-xl font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Selesai</button>
+                        </div>
+                    </div>
+
+                    <!-- Reports Grid / Table -->
+                    <div class="space-y-4" id="staffReportsContainer">
+                        <!-- Dynamic Reports Injected via JS -->
+                    </div>
                 </div>
             </div>
         </section>
@@ -716,6 +843,73 @@
                 <button onclick="closeModal('presentationModal')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-semibold transition">Tutup Modal</button>
                 <div class="text-xs text-slate-500 font-mono">Kelompok Tugas TI UNTAD</div>
             </div>
+        </div>
+    </div>
+
+    <!-- Staff Login Modal -->
+    <div id="staffLoginModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative text-white space-y-6">
+            <!-- Close Button -->
+            <button onclick="closeModal('staffLoginModal')" class="absolute top-4 right-4 w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+                <i class="fa-solid fa-xmark text-base"></i>
+            </button>
+
+            <!-- Header -->
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto text-2xl shadow-lg shadow-emerald-500/10">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h3 class="text-xl font-extrabold text-white">Login Petugas Kebersihan</h3>
+                <p class="text-xs text-slate-400">Portal internal petugas & staf kebersihan Universitas Tadulako</p>
+            </div>
+
+            <!-- Demo Account Info Box -->
+            <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-3.5 flex items-center justify-between text-xs">
+                <div>
+                    <div class="text-[11px] font-bold text-amber-400 flex items-center gap-1">
+                        <i class="fa-solid fa-key"></i> Akun Demo Petugas:
+                    </div>
+                    <div class="text-slate-300 font-mono mt-0.5">petugas / untad123</div>
+                </div>
+                <button type="button" onclick="fillStaffDemoCredentials()" class="px-2.5 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 text-[11px] font-semibold transition">
+                    Isi Otomatis
+                </button>
+            </div>
+
+            <!-- Login Form -->
+            <form onsubmit="handleStaffLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">ID / NIP Petugas</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500 text-sm">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" id="staffIdInput" required placeholder="Contoh: petugas atau PET-UNTAD-01" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none text-sm transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">Kata Sandi</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500 text-sm">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="staffPasswordInput" required placeholder="Masukkan kata sandi..." class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none text-sm transition">
+                        <button type="button" onclick="toggleStaffPasswordVisibility()" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-500 hover:text-slate-300">
+                            <i class="fa-solid fa-eye text-sm" id="staffPasswordEyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="staffLoginErrorMsg" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>ID Petugas atau kata sandi salah. Gunakan akun demo: petugas / untad123</span>
+                </div>
+
+                <button type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Masuk Ke Portal Petugas
+                </button>
+            </form>
         </div>
     </div>
 
@@ -1096,6 +1290,55 @@
             }
         }
 
+        function validateNameKey(e) {
+            // Allow control keys (Backspace, Delete, Arrow keys, Tab, Enter, Ctrl shortcuts)
+            if (e.ctrlKey || e.altKey || e.metaKey || e.key.length > 1) {
+                return;
+            }
+            // Block numbers and non-letter characters
+            if (!/^[a-zA-Z\s'.,-]$/.test(e.key)) {
+                e.preventDefault();
+                showNameWarning(true);
+            }
+        }
+
+        function validateNameInput(input) {
+            // Filter out numbers and disallowed characters
+            if (/[^a-zA-Z\s'.,-]/.test(input.value)) {
+                input.value = input.value.replace(/[^a-zA-Z\s'.,-]/g, '');
+                showNameWarning(true);
+            } else {
+                showNameWarning(false);
+            }
+        }
+
+        let nameWarningTimeout;
+        function showNameWarning(show) {
+            const input = document.getElementById('reportName');
+            const errorElem = document.getElementById('reportNameError');
+            if (!errorElem || !input) return;
+
+            clearTimeout(nameWarningTimeout);
+            if (show) {
+                errorElem.classList.remove('hidden');
+                errorElem.classList.add('flex');
+                input.classList.add('border-rose-400', 'focus:ring-rose-400');
+                input.classList.remove('border-slate-300', 'focus:ring-emerald-500');
+
+                nameWarningTimeout = setTimeout(() => {
+                    errorElem.classList.add('hidden');
+                    errorElem.classList.remove('flex');
+                    input.classList.remove('border-rose-400', 'focus:ring-rose-400');
+                    input.classList.add('border-slate-300', 'focus:ring-emerald-500');
+                }, 3000);
+            } else {
+                errorElem.classList.add('hidden');
+                errorElem.classList.remove('flex');
+                input.classList.remove('border-rose-400', 'focus:ring-rose-400');
+                input.classList.add('border-slate-300', 'focus:ring-emerald-500');
+            }
+        }
+
         function handleReportSubmit(e) {
             e.preventDefault();
             const binId = document.getElementById('reportBinId').value;
@@ -1104,6 +1347,23 @@
             const rawName = document.getElementById('reportName').value.trim();
             const rawNim = document.getElementById('reportNim').value.trim().toUpperCase();
             const rawProdi = document.getElementById('reportProdi').value;
+
+            // Name Validation logic: Only letters, spaces, and valid name characters (no numbers allowed)
+            if (rawName !== '') {
+                const hasNumbers = /\d/.test(rawName);
+                const isOnlyLetters = /^[A-Za-z\s'.,-]+$/.test(rawName);
+                if (hasNumbers || !isOnlyLetters) {
+                    Swal.fire({
+                        title: 'Format Nama Tidak Valid',
+                        text: 'Nama Lengkap hanya boleh berisi huruf (tidak boleh mengandung angka).',
+                        icon: 'warning',
+                        confirmButtonColor: '#16a34a'
+                    });
+                    document.getElementById('reportName').focus();
+                    showNameWarning(true);
+                    return;
+                }
+            }
 
             // NIM Validation logic: Prevent typing random short numbers like "123"
             if (rawNim !== '') {
@@ -1170,6 +1430,7 @@
             // Reset form
             document.getElementById('reportForm').reset();
             document.getElementById('photoPreviewContainer').classList.add('hidden');
+            showNameWarning(false);
         }
 
         function renderStaffReports(statusFilter) {
@@ -1237,11 +1498,224 @@
             container.innerHTML = html;
         }
 
+        // ================= STAFF PORTAL AUTHENTICATION & MANAGEMENT =================
+        let isStaffLoggedIn = false;
+        let currentStaff = null;
+
+        function checkStaffSession() {
+            const saved = sessionStorage.getItem('untad_staff_session');
+            if (saved) {
+                try {
+                    currentStaff = JSON.parse(saved);
+                    isStaffLoggedIn = true;
+                } catch (e) {
+                    isStaffLoggedIn = false;
+                    currentStaff = null;
+                }
+            }
+            updateStaffPortalUI();
+        }
+
+        function handleStaffLogin(e) {
+            e.preventDefault();
+            const id = document.getElementById('staffIdInput').value.trim();
+            const pass = document.getElementById('staffPasswordInput').value;
+            const errorMsg = document.getElementById('staffLoginErrorMsg');
+
+            // Accepted credentials: ID: petugas, admin, pet-untad, ruslan; Password: untad123, admin123, bersih2024
+            const validIds = ['petugas', 'pet-untad', 'pet-untad-01', 'admin', 'ruslan', 'suherman'];
+            const validPass = ['untad123', 'admin123', 'bersih2024', 'petugas'];
+
+            if (validIds.includes(id.toLowerCase()) && validPass.includes(pass)) {
+                if (errorMsg) errorMsg.classList.add('hidden');
+                isStaffLoggedIn = true;
+                currentStaff = {
+                    name: id.toLowerCase().includes('ruslan') ? 'Bpk. Ruslan, S.Kom' : 'Bpk. Suherman',
+                    id: 'NIP. 19850720 201001 1 008',
+                    unit: 'Tim Kebersihan & Sarpras UNTAD'
+                };
+                sessionStorage.setItem('untad_staff_session', JSON.stringify(currentStaff));
+
+                closeModal('staffLoginModal');
+                updateStaffPortalUI();
+                scrollToSection('dashboard');
+
+                Swal.fire({
+                    title: 'Login Berhasil!',
+                    text: `Selamat datang di Portal Petugas Kebersihan, ${currentStaff.name}.`,
+                    icon: 'success',
+                    confirmButtonColor: '#16a34a'
+                });
+            } else {
+                if (errorMsg) errorMsg.classList.remove('hidden');
+            }
+        }
+
+        function fillStaffDemoCredentials() {
+            const idInput = document.getElementById('staffIdInput');
+            const passInput = document.getElementById('staffPasswordInput');
+            const errorMsg = document.getElementById('staffLoginErrorMsg');
+            if (idInput) idInput.value = 'petugas';
+            if (passInput) passInput.value = 'untad123';
+            if (errorMsg) errorMsg.classList.add('hidden');
+        }
+
+        function loginStaffDemo() {
+            fillStaffDemoCredentials();
+            isStaffLoggedIn = true;
+            currentStaff = {
+                name: 'Bpk. Suherman',
+                id: 'NIP. 19850720 201001 1 008',
+                unit: 'Tim Kebersihan & Sarpras UNTAD'
+            };
+            sessionStorage.setItem('untad_staff_session', JSON.stringify(currentStaff));
+            updateStaffPortalUI();
+            scrollToSection('dashboard');
+
+            Swal.fire({
+                title: 'Akses Demo Petugas Aktif!',
+                text: 'Anda berhasil masuk ke Portal Petugas Kebersihan UNTAD.',
+                icon: 'success',
+                timer: 2000,
+                confirmButtonColor: '#16a34a'
+            });
+        }
+
+        function logoutStaff() {
+            Swal.fire({
+                title: 'Keluar dari Portal?',
+                text: 'Sesi petugas kebersihan akan ditutup dan kembali ke tampilan pengunjung umum.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#64748b'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    isStaffLoggedIn = false;
+                    currentStaff = null;
+                    sessionStorage.removeItem('untad_staff_session');
+                    updateStaffPortalUI();
+                    scrollToSection('dashboard');
+                    Swal.fire({
+                        title: 'Telah Keluar',
+                        text: 'Anda telah kembali ke mode dashboard pengunjung.',
+                        icon: 'info',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+
+        function toggleStaffPasswordVisibility() {
+            const passInput = document.getElementById('staffPasswordInput');
+            const eyeIcon = document.getElementById('staffPasswordEyeIcon');
+            if (!passInput || !eyeIcon) return;
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        }
+
+        function handleStaffNavClick() {
+            if (isStaffLoggedIn) {
+                scrollToSection('dashboard');
+            } else {
+                openModal('staffLoginModal');
+            }
+        }
+
+        function updateStaffPortalUI() {
+            const lockedView = document.getElementById('staffLockedView');
+            const activeView = document.getElementById('staffActiveView');
+            const navStaffBtn = document.getElementById('navStaffBtn');
+            const navLogoutBtn = document.getElementById('navLogoutBtn');
+            const mobileStaffBtn = document.getElementById('mobileStaffBtn');
+
+            if (isStaffLoggedIn) {
+                if (lockedView) lockedView.classList.add('hidden');
+                if (activeView) activeView.classList.remove('hidden');
+
+                if (navStaffBtn) {
+                    navStaffBtn.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Portal Petugas';
+                    navStaffBtn.className = 'px-3 py-2 rounded-lg text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100 transition flex items-center gap-1.5 border border-emerald-200';
+                }
+                if (navLogoutBtn) {
+                    navLogoutBtn.classList.remove('hidden');
+                }
+                if (mobileStaffBtn) {
+                    mobileStaffBtn.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1"></span> Petugas';
+                    mobileStaffBtn.className = 'md:hidden inline-flex items-center justify-center px-2.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold transition';
+                }
+
+                if (currentStaff) {
+                    const nameElem = document.getElementById('staffDisplayName');
+                    const idElem = document.getElementById('staffDisplayId');
+                    if (nameElem) nameElem.innerText = currentStaff.name;
+                    if (idElem) idElem.innerText = currentStaff.id;
+                }
+
+                updateStaffMetrics();
+                renderStaffReports('all');
+            } else {
+                if (lockedView) lockedView.classList.remove('hidden');
+                if (activeView) activeView.classList.add('hidden');
+
+                if (navStaffBtn) {
+                    navStaffBtn.innerHTML = '<i class="fa-solid fa-lock text-slate-400"></i> Portal Petugas';
+                    navStaffBtn.className = 'px-3 py-2 rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-slate-100 transition flex items-center gap-1.5';
+                }
+                if (navLogoutBtn) {
+                    navLogoutBtn.classList.add('hidden');
+                }
+                if (mobileStaffBtn) {
+                    mobileStaffBtn.innerHTML = '<i class="fa-solid fa-user-shield text-emerald-600 mr-1"></i> Petugas';
+                    mobileStaffBtn.className = 'md:hidden inline-flex items-center justify-center px-2.5 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-semibold transition';
+                }
+            }
+        }
+
+        function updateStaffMetrics() {
+            const total = reportsData.length;
+            const newCount = reportsData.filter(r => r.status === 'Baru').length;
+            const procCount = reportsData.filter(r => r.status === 'Diproses').length;
+            const doneCount = reportsData.filter(r => r.status === 'Selesai').length;
+
+            const tElem = document.getElementById('staffMetricTotal');
+            const nElem = document.getElementById('staffMetricNew');
+            const pElem = document.getElementById('staffMetricProcess');
+            const dElem = document.getElementById('staffMetricDone');
+
+            if (tElem) tElem.innerText = total;
+            if (nElem) nElem.innerText = newCount;
+            if (pElem) pElem.innerText = procCount;
+            if (dElem) dElem.innerText = doneCount;
+        }
+
         function updateReportStatus(repId, newStatus) {
+            if (!isStaffLoggedIn) {
+                Swal.fire({
+                    title: 'Akses Dibatasi',
+                    text: 'Silakan login sebagai petugas kebersihan terlebih dahulu.',
+                    icon: 'warning',
+                    confirmButtonColor: '#16a34a'
+                });
+                openModal('staffLoginModal');
+                return;
+            }
+
             const rep = reportsData.find(r => r.id === repId);
             if (rep) {
                 rep.status = newStatus;
                 renderStaffReports('all');
+                updateStaffMetrics();
                 Swal.fire({
                     title: 'Status Diperbarui',
                     text: `Laporan ${repId} sekarang berstatus '${newStatus}'.`,
@@ -1252,6 +1726,17 @@
         }
 
         function completeReportPrompt(repId) {
+            if (!isStaffLoggedIn) {
+                Swal.fire({
+                    title: 'Akses Dibatasi',
+                    text: 'Silakan login sebagai petugas kebersihan terlebih dahulu.',
+                    icon: 'warning',
+                    confirmButtonColor: '#16a34a'
+                });
+                openModal('staffLoginModal');
+                return;
+            }
+
             Swal.fire({
                 title: 'Selesaikan & Timbang Sampah',
                 text: 'Masukkan berat sampah terpilah yang berhasil diangkut (dalam kg):',
@@ -1279,6 +1764,7 @@
                         renderMarkers('all');
                         renderStaffReports('all');
                         updateStats();
+                        updateStaffMetrics();
 
                         Swal.fire('Selesai!', `Laporan telah diselesaikan. +${weight} kg sampah tercatat ke statistik.`, 'success');
                     }
@@ -1290,6 +1776,7 @@
             document.getElementById('statTotalReports').innerText = reportsData.length;
             const totalWeight = reportsData.reduce((acc, r) => acc + (r.weight || 0), 120);
             document.getElementById('statSortedWeight').innerText = `${totalWeight} kg`;
+            updateStaffMetrics();
         }
 
         function filterReports(type) {
@@ -1302,10 +1789,12 @@
 
             Object.keys(btns).forEach(key => {
                 const el = document.getElementById(btns[key]);
-                if (key === type) {
-                    el.className = 'px-3 py-2 rounded-xl font-bold bg-emerald-500 text-slate-950 transition';
-                } else {
-                    el.className = 'px-3 py-2 rounded-xl font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+                if (el) {
+                    if (key === type) {
+                        el.className = 'px-3.5 py-2 rounded-xl font-bold bg-emerald-500 text-slate-950 transition';
+                    } else {
+                        el.className = 'px-3.5 py-2 rounded-xl font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+                    }
                 }
             });
 
@@ -1379,7 +1868,7 @@
             populateBinDropdownsAndHero();
             initMap();
             initCharts();
-            renderStaffReports('all');
+            checkStaffSession();
             selectBinDetail('TB-UNTAD-01');
         };
     </script>
